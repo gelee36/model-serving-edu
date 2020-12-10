@@ -1,4 +1,4 @@
-version: '2.3'
+version: '3'
 
 services:
 
@@ -23,17 +23,43 @@ services:
     hostname: flask
     restart: on-failure
     ports:
-      - 8051-8053:5000 # tensorflow servring port
+      - 5000 # tensorflow servring port
+    environment:
+      - SERVICE_PORTS=5000
     volumes:
       - ./covid19:/app  # tf2 serving convention
+    deploy:
+      replicas: 2
+    networks:
+      - web
 
-  fastapi:
-    build:
-      context: ./covid-fastapi
-    image: ai-service-fastapi:0.1.0
-    hostname: fastapi
-    restart: on-failure
-    ports:
-      - 8053-8055:8000
+  # fastapi:
+  #   build:
+  #     context: ./covid-fastapi
+  #   image: ai-service-fastapi:0.1.0
+  #   hostname: fastapi
+  #   restart: on-failure
+  #   ports:
+  #     - 8000
+  #   volumes:
+  #     - ./covid-fastapi:/app
+
+  proxy:
+    image: dockercloud/haproxy
+    depends_on:
+      - flask
+    environment:
+      - BALANCE=leastconn
     volumes:
-      - ./covid-fastapi:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 80:80
+    networks:
+      - web
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+networks:
+  web:
+    driver: overlay
