@@ -340,7 +340,8 @@ async def query(request: Request, file: UploadFile = File(...)):
 
             # detection covid
             try:
-                prediction, prob, img_pred_name = test_rx_image_for_Covid19(covid_pneumo_model, img_path, filename)
+                # prediction, prob, img_pred_name = test_rx_image_for_Covid19(covid_pneumo_model, img_path, filename)
+                prediction, prob, img_pred_name = covid_classifier_model2(img_path, filename)
                 #prediction, prob, img_pred_name = generate_gradcam_heatmap(covid_pneumo_model, img_path, filename)
                 output_path = os.path.join(OUTPUT_FOLDER, img_pred_name)
                 #return render_template('index.html', prediction=prediction, confidence=prob, filename=image_name, xray_image=img_path, xray_image_with_heatmap=output_path)
@@ -417,8 +418,8 @@ async def covid_classifier_model2_heatmap(request: Request):
                        "instances": img.tolist()})
 
     #MODEL2_API_URL is tensorflow serving URL in another docker
-    HEADERS = {'content-type': 'application/json'}
-    MODEL2_API_URL = 'http://127.0.0.1:8511/v1/models/covid19/versions/2:predict'
+    HEADERS = {'content-type': 'application/json', 'Host': 'covid19-xray.myspace.example.com'}
+    MODEL2_API_URL = 'http://34.106.112.227:32380/v1/models/covid19-xray:predict'
     CLASS_NAMES = ['Covid19', 'Normal_Lung', 'Pneumonia_Bacterial_Lung']
 
     json_response = requests.post(MODEL2_API_URL, data=data, headers=HEADERS)
@@ -449,10 +450,10 @@ async def covid_classifier_model2_heatmap(request: Request):
 #    response.headers['Cache-Control'] = 'public, max-age=0'
 #    return response
 
-#if __name__ == '__main__':
+# if __name__ == '__main__':
 #    http_server = WSGIServer(('0.0.0.0', 8000), app)
 #    http_server.serve_forever()
 
 
 if __name__ == '__main__':
-   app.run()
+   app.run('0.0.0.0', 8000)
